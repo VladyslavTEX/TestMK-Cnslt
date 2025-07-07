@@ -40,7 +40,10 @@ jobs:
 
     - name: Get Public DNS
       id: get-dns
-      run: echo "PUBLIC_DNS=$(terraform output -raw public_dns)" >> $GITHUB_OUTPUT
+      run: |
+         DNS=$(terraform output -raw public_dns)
+          echo "PUBLIC_DNS=${DNS}" >> $GITHUB_OUTPUT
+          echo "::set-output name=PUBLIC_DNS::${DNS}"
       working-directory: ./terraform
 
     - name: Install Ansible
