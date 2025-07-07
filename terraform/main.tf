@@ -19,8 +19,8 @@ resource "aws_key_pair" "deployer" {
 }
 
 resource "aws_security_group" "web_sg" {
-  name        = "web_sg"
-  description = "Allow HTTP traffic"
+  name        = "web_sg_${var.environment_suffix}"
+  description = "Allow HTTP/SSH for web server ${var.environment_suffix}"
 
   ingress {
     from_port   = 80
@@ -41,6 +41,10 @@ resource "aws_security_group" "web_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "web-sg-${var.environment_suffix}"
   }
 }
 
