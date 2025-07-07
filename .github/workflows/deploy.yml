@@ -42,21 +42,23 @@ jobs:
       run: terraform apply -auto-approve -var="ssh_public_key=${{ env.PUBLIC_SSH_KEY }}"
       working-directory: ./terraform
 
-    - name: Get Clean Public DNS
+    - name: Extract Public DNS
       id: get-dns
       run: |
-        # Получаем чистый output
-        DNS=$(terraform output -raw public_dns 2>/dev/null | head -n 1 | tr -d '\n')
+        # Записываем вывод в файл
+        terraform output -raw public_dns > dns.txt
         
-        # Проверка формата
-        if [[ ! "$DNS" =~ ^ec2-.+\.compute\.amazonaws\.com$ ]]; then
-          echo "::error::Invalid DNS format: $DNS"
+        # Извлекаем только валидный DNS
+        DNS=$(grep -oP 'ec2-[0-9-]+\.compute(-1)?\.amazonaws\.com' dns.txt || true)
+        
+        if [ -z "$DNS" ]; then
+          echo "::error::Invalid DNS format. Raw output: $(cat dns.txt)"
           exit 1
         fi
         
-        echo "PUBLIC_DNS=$DNS" >> $GITHUB_OUTPUT
-        echo "DNS=$DNS" >> $GITHUB_ENV
-        echo "Extracted DNS: $DNS"
+        echo "PUBLIC_DNS=${DNS}" >> $GITHUB_OUTPUT
+        echo "DNS=${DNS}" >> $GITHUB_ENV
+        echo "Extracted DNS: ${DNS}"
       working-directory: ./terraform
 
     - name: Install Ansible
