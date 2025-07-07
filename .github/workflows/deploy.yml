@@ -10,6 +10,10 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
     - uses: actions/checkout@v3
 
@@ -38,12 +42,21 @@ jobs:
       run: terraform apply -auto-approve -var="ssh_public_key=${{ env.PUBLIC_SSH_KEY }}"
       working-directory: ./terraform
 
-    - name: Get Public DNS
+    - name: Get Clean Public DNS
       id: get-dns
       run: |
-         DNS=$(terraform output -raw public_dns)
-          echo "PUBLIC_DNS=${DNS}" >> $GITHUB_OUTPUT
-          echo "::set-output name=PUBLIC_DNS::${DNS}"
+        # Получаем чистый output
+        DNS=$(terraform output -raw public_dns 2>/dev/null | head -n 1 | tr -d '\n')
+        
+        # Проверка формата
+        if [[ ! "$DNS" =~ ^ec2-.+\.compute\.amazonaws\.com$ ]]; then
+          echo "::error::Invalid DNS format: $DNS"
+          exit 1
+        fi
+        
+        echo "PUBLIC_DNS=$DNS" >> $GITHUB_OUTPUT
+        echo "DNS=$DNS" >> $GITHUB_ENV
+        echo "Extracted DNS: $DNS"
       working-directory: ./terraform
 
     - name: Install Ansible
@@ -54,11 +67,11 @@ jobs:
     - name: Configure inventory
       run: |
         echo "[webservers]" > inventory.ini
-        echo "${{ steps.get-dns.outputs.PUBLIC_DNS }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+        echo "${{ env.DNS }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
 
     - name: Run Ansible playbook
       run: ansible-playbook -i inventory.ini ansible/deploy.yml --ssh-common-args='-o StrictHostKeyChecking=no'
 
     - name: Show Website URL
       run: |
-        echo "Website deployed at: http://${{ steps.get-dns.outputs.PUBLIC_DNS }}"
+        echo "Website deployed at: http://${{ env.DNS }}"
