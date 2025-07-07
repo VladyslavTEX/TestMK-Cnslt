@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello Page</title>
+</head>
+<body>
+    <pre id="content">Loading content...</pre>
+    <script>
+        fetch('hello.txt')
+            .then(response => response.text())
+            .then(text => {
+                document.getElementById('content').textContent = text;
+            });
+    </script>
+</body>
+</html>
