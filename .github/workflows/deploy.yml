@@ -18,6 +18,13 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      
+    - name: Clean previous resources
+      run: |
+        if terraform state list >/dev/null 2>&1; then
+          terraform destroy -auto-approve
+        fi
+      working-directory: ./terraform
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
