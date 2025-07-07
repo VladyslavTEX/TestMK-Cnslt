@@ -32,12 +32,6 @@
         dest: /var/www/html/index.html
         mode: 0644
 
-    - name: Copy hello.txt
-      copy:
-        src: ../hello.txt
-        dest: /var/www/html/hello.txt
-        mode: 0644
-
     - name: Restart nginx
       service:
         name: nginx
