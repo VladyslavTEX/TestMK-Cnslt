@@ -1,19 +1,44 @@
 ---
-- hosts: web
+- name: Configure web server
+  hosts: all
   become: yes
+  vars:
+    hello_content: "{{ lookup('file', '../hello.txt') }}"
+  
   tasks:
     - name: Install nginx
-      yum:
+      apt:
         name: nginx
         state: present
+        update_cache: yes
+
+    - name: Copy nginx config
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+
+    - name: Create index.html
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Hello Page</title>
+          </head>
+          <body>
+              <pre>{{ hello_content }}</pre>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        mode: 0644
 
     - name: Copy hello.txt
       copy:
         src: ../hello.txt
-        dest: /usr/share/nginx/html/index.html
+        dest: /var/www/html/hello.txt
+        mode: 0644
 
-    - name: Start nginx
+    - name: Restart nginx
       service:
         name: nginx
-        state: started
-        enabled: true
+        state: restarted
