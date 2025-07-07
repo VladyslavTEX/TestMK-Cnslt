@@ -48,6 +48,7 @@ jobs:
         -var="aws_region=${{ env.AWS_REGION }}" \
         -var="bucket_name=my-website-${{ github.run_id }}" \
         -var="ssh_public_key=${{ env.PUBLIC_SSH_KEY }}"
+        -var="environment_suffix=${{ github.run_id }}"
       working-directory: ./terraform
 
     - name: Get Website URL
