@@ -14,7 +14,7 @@ resource "aws_instance" "web_server" {
 }
 
 resource "aws_key_pair" "deployer" {
-  key_name   = "deployer-key-${{ github.run_id }}"
+  key_name   = "deployer-key-${var.environment_suffix}"
   public_key = var.ssh_public_key
 }
 
